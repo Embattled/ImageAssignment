@@ -1,0 +1,254 @@
+
+Programming Assignment 1
+
+1. Introduction
+
+PNM, consisting of PBM, PGM, and PPM, is a popular
+image file format in image processing especially
+on UNIX.  netpbm, a program suite for handling PNM
+files, has been widely used.
+In this series of assignments we use PNM as the
+standard input/output file format.
+
+The details about PBM, PGM, and PPM can be found at:
+  http://netpbm.sourceforge.net/doc/
+
+
+2. Making easy programs
+
+Let's make some easy programs in C/C++, preferably
+on UNIX (including Linux and Solaris) but not limited
+to.
+
+xv is a popular image viewer on UNIX.
+(If you are using Windows, IrfanView is very useful.)
+First of all, create a PGM file using xv or find a PGM
+file somewhere. Using binary format instead of ascii
+format is preferable, since ascii format is obsolete
+these days.
+
+Should you try
+  $ xv
+you will find the usage is quite intuitive.
+
+
+The first assignment is for making a program which does:
+
+(1) read a PGM file (portable graymap) onto the memory
+    (1 dimensional or 2 dimensional array), and print
+    the width and height of the image on the screen,
+
+(2) write the image data on the memory to a new PGM file.
+
+For example, the command "easypgm" can be used in this
+way:
+
+  $ ./easypgm input.pgm output.pgm
+  Image size = 640x480
+  $
+
+If you try
+  $ xv output.pgm
+you should see exactly the same image as input.pgm .
+If the images do not match, there's something wrong
+with your program.
+
+Since this is a training, you should not use any image
+processing library such as OpenCV or libnetpbm.
+
+Good luck!
+---------
+Oct. 23, 2008   Written by Hideaki Goto
+Dec. 1, 2008  Revised by H. Goto
+
+---------
+Programming Assignment 2
+
+1. Make a program which reads a PGM file, converts the
+ image into an RGB image, and produces a PPM file,
+ just like pgmtoppm in the netpbm does.
+
+  example:
+  $ ./mypgmtoppm input.pgm > output.ppm
+
+Hint:
+ Let R=Gr, G=Gr, and B=Gr, where Gr is the gray value
+ of PGM image.
+
+
+2. Make a program which reads a PGM file, converts the
+ image into a bitmap image, and produces a PBM file,
+ just like "pgmtopbm -threshold -value val" in the
+ netpbm does.
+
+  example:
+  $ ./mypgmtopbm thres input.pgm > output.pbm
+  where thres is a threshold value between 0 and 255.
+
+Hints:
+ Let pixel value be 1 if the gray value is smaller than
+ the given threshold.
+ Otherwise, let pixel value be 0.
+
+ This program requires some bit operations such as
+ logical and/or (& and | in C).
+
+---------
+Oct. 23, 2008   Written by Hideaki Goto
+
+---------
+Programming Assignment 3
+
+1. Make a program which reads a PGM file, flips the
+ image vertically, and produces a new PGM file.
+ You should have a new image whose bottom and top lines
+ correspond to the original image's top and bottom lines,
+ respectively.
+
+ Note that the new image is NOT the upside-down version
+ of the original.
+
+  example:
+  $ ./mypgmflipV input.pgm output.pgm
+
+Hint:
+ Use a 2-dimensional array for storing the image.
+
+
+2. Modify the program above and make another program
+ that can handle PPM file. Then, create a program
+ which reads a PPM file, flips the image horizontally,
+ and produces a new PPM file.
+ You should have a new image whose leftmost and rightmost
+ lines correspond to the original image's rightmost and
+ leftmost lines, respectively.
+
+  example:
+  $ ./myppmflipH input.ppm output.ppm
+
+Hint:
+ You do not need a 2-dimensional array for this program.
+ A line buffer, i.e. 1-dimensional array, is enough.
+
+---------
+Dec. 1, 2008   Written by Hideaki Goto
+
+---------
+Programming Assignment 4
+
+1. Make a program which reads a PGM file, shrinks or enlarges
+ the image by a scale factor given as a command line argument,
+ and writes the image to a new PGM file.
+ (A nice example is pnmscale.)
+
+  examples:
+  $ ./mypgmscale 0.3 input.pgm output.pgm
+  (You will get a new image whose size is 30% of the original.)
+
+  $ ./mypgmscale 1.2 input.pgm output.pgm
+  (You will get a new image 20% larger than the original.)
+
+Hint:
+ Try "nearest neighbor method (最近傍法)" at first.
+
+
+2. Modify the program above and make another program
+ that is equipped with "bilinear interpolation
+ (バイリニア補間)".
+ Compare the output images with and without the interpolation
+ to see the image quality differences.
+
+---------
+Mar. 16, 2009   Written by Hideaki Goto
+
+---------
+Programming Assignment 5
+
+1. Make a program which reads a PGM file, rotates the image
+ by an angle given as a command line argument, and writes
+ the image to a new PGM file.
+ (A nice example is pnmrotate.)
+
+  examples:
+  $ ./mypgmrotate 30 input.pgm output.pgm
+  (You will get a new image 30deg rotated.)
+
+Hint:
+ The output image should be larger than the original
+ depending on the rotation angle.
+ You may ignore "antialiasing process".
+
+---------
+Mar. 16, 2009   Written by Hideaki Goto
+
+---------
+Programming Assignment 6
+
+1. Make a program which reads a PGM file, apply a simple
+ smoothing, and writes the image to a new PGM file.
+
+  examples:
+  $ ./mypgmsmooth input.pgm output.pgm
+
+ A simple smoothing operation is obtained by local averaging.
+ Use a convolution mask of 3x3 matrix:
+   1 1 1
+   1 1 1
+   1 1 1  /9
+
+ The new pixel value f'(x,y) is obtained by:
+   f'(x,y) = ( 1*f(x-1,y-1) + 1*f(x,y-1) + 1*f(x+1,y-1)
+             + 1*f(x-1,y  ) + 1*f(x,y  ) + 1*f(x+1,y  )
+             + 1*f(x-1,y+1) + 1*f(x,y+1) + 1*f(x+1,y+1)  ) /9
+ where f(x,y) is the original pixel value at (x,y).
+
+Hint:
+Special processing is required for image borders (upper, lower,
+left, and right).
+
+
+2. Change the smoothing mask to
+   1 1 1
+   1 2 1
+   1 1 1  /10
+
+ Compare visually the image smoothness.
+
+---------
+Oct. 9, 2009   Written by Hideaki Goto
+
+---------
+Programming Assignment 7
+
+1. Learn Sobel Filter and implement it. Make a program
+ which reads a PGM file, applies the Sobel edge detector
+ and produces a PGM file showing edge intensity.
+
+  examples:
+  $ ./mysobel input.pgm output.pgm
+
+ The edge intensity is defined by Eedge = sqrt(Ex*Ex + Ey*Ey),
+ where Ex and Ey are horizontal and vertical edge components.
+
+Hint:
+You need to scale the edge intensity to avoid pixel value
+overflow in the output image.
+
+
+2. Implement Laplacian edge detector using 3x3 Laplacian
+ defined by a mask:
+  -1 -1 -1
+  -1  8 -1
+  -1 -1 -1
+
+ Make a program which reads a PGM file, detects edges, and
+ produces a PGM file showing absolute values of the edges.
+
+Hint:
+Same hint as in 1.
+
+3. Compare visually the difference between Sobel and Laplacian
+ edge detection results. What difference(s) have you found?
+
+---------
+Oct. 14, 2009   Written by Hideaki Goto
