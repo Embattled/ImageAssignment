@@ -8,3 +8,19 @@ The copyright of the problem belongs to professor Goto.
 Source code written in April 2020 - October 2020 by Yongzhen Long.
 
 # Manual
+
+All operation include:
+* Print Image Information
+* Write Image as an AsciiFile.
+* pgm2ppm
+* pgm2pbm
+* flipVertical
+* flipHorizontal
+* Shrink
+* Rotation
+* Smooth
+* Sobel
+* Laplacian
+
+Run `./image input.pgm` will execute all operation above on input.pgm file.  
+The command mode is to be update.  

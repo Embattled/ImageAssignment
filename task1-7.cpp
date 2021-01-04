@@ -1,4 +1,4 @@
-
+#include "stdio.h"
 #include "mat.h"
 #include "image.h"
 
@@ -6,6 +6,8 @@ int main(int argc, char const *argv[])
 {
     if (argc == 2)
     {
+        printf("Execute all operation on %s.\n",argv[1]);
+
         ryu::mat *myImage = new ryu::mat(argv[1]);
         myImage->printInfor();
 
@@ -23,7 +25,7 @@ int main(int argc, char const *argv[])
         // vertical flip
         *output = *myImage;
         ryu::flipVertical(output);
-        output->writeAscFile("vertical.ppm");
+        output->writeAscFile("vertical.pgm");
 
         //horizontal flip
         *output = *myImage;
@@ -54,6 +56,24 @@ int main(int argc, char const *argv[])
         ryu::laplacian(myImage, output);
         output->writeAscFile("laplacian.pgm");
     }
+    else if(argc==3){
 
+    }
+    else
+    {
+        printf("Image (filename) (command) [mode] [param]\n");
+        printf("Operation           command     mode    param\n");
+        printf("printInfor                              \n");
+        printf("writeAscFile        copy        n,b     \n");
+        printf("pgm2ppm             g2p                 \n");
+        printf("pgm2pbm             g2b                 \n");
+        printf("flipVertical        fv                  \n");
+        printf("flipHorizontal      fh                  \n");
+        printf("shrinkpgm           sh                  \n");
+        printf("rotation            ro                  \n");
+        printf("smooth              sm                  \n");
+        printf("sobel               so                  \n");
+        printf("laplacian           lap                 \n");
+    }
     return 0;
 }
