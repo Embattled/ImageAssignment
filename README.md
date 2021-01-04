@@ -6,3 +6,5 @@ Assignment details is in the "taskInformation.txt" file.
 
 The copyright of the problem belongs to professor Goto.
 Source code written in April 2020 - October 2020 by Yongzhen Long.
+
+# Manual
