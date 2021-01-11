@@ -8,6 +8,7 @@
 #define WRITEERROR 0b00010000
 #define MATMEMNEWERROR 0b00100000
 #define PROPERTYERROR 0b01000000
+#define VALUEDIFFTYPE 0b10000000
 
 #define RYU_MAT_SUCCESS 0
 #define RYU_MAT_FAILURE 1
@@ -53,6 +54,7 @@ namespace ryu
         long long getPixelNum() const { return pixelNum; };
         long long getValueNum() const { return srcValueNumber; }
         int writeAscFile(const char *outputPath = nullptr);
+        int writeBinFile(const char *outputPath = nullptr);
         int initialize(int format, int width, int high, int colordepth = 0);
         mat(const char *path);
         mat(const mat &copymat);

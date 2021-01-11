@@ -32,6 +32,9 @@ namespace ryu
         case MODEPROPERTYERROR:
             std::cout << "Shrink with illegal mode property." << std::endl;
             break;
+        case PARAMETERERROR:
+            std::cout << "Illegal parameter." << std::endl;
+            break;
         default:
             break;
         }
@@ -85,8 +88,10 @@ namespace ryu
         return RYU_SUCCESS;
     }
 
-    int pgm2pbm(const mat *source, mat *destination, unsigned int threshold)
+    int pgm2pbm(const mat *source, mat *destination, const char *cthreshold)
     {
+
+        unsigned int threshold = (unsigned int)atoi(cthreshold);
         if (source->getFormat() != 2)
         {
             // std::cout << "Source image doesn't pgm image.";
@@ -96,7 +101,7 @@ namespace ryu
         }
 
         // if threshould not set, default value is source image's colordepth/2.
-        if (threshold == 0)
+        if (threshold <= 0 || threshold > (unsigned int)source->getColordepth())
             threshold = source->getColordepth() / 2;
 
         int format = 1;
@@ -250,7 +255,7 @@ namespace ryu
         return RYU_SUCCESS;
     } // namespace ryu
 
-    int shrinkpgm(char mode, const mat *source, mat *destination, double times)
+    int shrinkpgm(const mat *source, mat *destination, const char *cmode, const char *strtimes)
     {
         int format = source->getFormat();
         if (format != 2)
@@ -259,6 +264,14 @@ namespace ryu
             errorMatP = source;
             return RYU_FAILURE;
         }
+        double times = atof(strtimes);
+        if (times < 0 || times > 20)
+        {
+            errorProblem = PARAMETERERROR;
+            errorMatP = nullptr;
+            return RYU_FAILURE;
+        }
+
         int newWidth = (int)round(source->getWidth() * times);
         int newHigh = (int)round(source->getHight() * times);
 
@@ -270,11 +283,11 @@ namespace ryu
         }
 
         //select shrink function
-        if (mode == 'n')
+        if (strcmp(cmode, "n") == 0)
         {
             return nearestNeighbor(source, destination, times);
         }
-        else if (mode == 'b')
+        else if (strcmp(cmode, "b") == 0)
         {
             return bilinearInterpolation(source, destination, times);
         }
@@ -298,36 +311,40 @@ namespace ryu
         double HShrinkTimes = (double)newWidth / oldWidth;
         double VShrinkTimes = (double)newHigh / oldHigh;
 
-        int *oldRow = new (std::nothrow) int[newHigh];
-        int *oldColumn = new (std::nothrow) int[newWidth];
-        if (oldRow == nullptr || oldColumn == nullptr)
-        {
-            errorProblem = MEMNEWERROR;
-            errorMatP = nullptr;
-            return RYU_FAILURE;
-        }
+        // int *oldRow = new (std::nothrow) int[newHigh];
+        // int *oldColumn = new (std::nothrow) int[newWidth];
+        // if (oldRow == nullptr || oldColumn == nullptr)
+        // {
+        //     errorProblem = MEMNEWERROR;
+        //     errorMatP = nullptr;
+        //     return RYU_FAILURE;
+        // }
 
-        for (int i = 1; i <= newHigh; i++)
-        {
-            oldRow[i - 1] = (int)round(i / VShrinkTimes) - 1;
-        }
+        // for (int i = 1; i <= newHigh; i++)
+        // {
+        //     oldRow[i - 1] = (int)round(i / VShrinkTimes) - 1;
+        // }
 
-        for (int i = 1; i <= newWidth; i++)
-        {
-            oldColumn[i - 1] = (int)round(i / HShrinkTimes) - 1;
-        }
+        // for (int i = 1; i <= newWidth; i++)
+        // {
+        //     oldColumn[i - 1] = (int)round(i / HShrinkTimes) - 1;
+        // }
         for (int row = 0; row < newHigh; row++)
         {
             for (int column = 0; column < newWidth; column++)
             {
+                int oldRow = (int)round((row + 1) / VShrinkTimes) - 1;
+                int oldColumn = (int)round((column + 1) / HShrinkTimes) - 1;
+                long long oldIndex = oldRow * oldWidth + oldColumn;
+
                 long long newIndex = row * newWidth + column;
-                long long oldIndex = oldRow[row] * oldWidth + oldColumn[column];
+                // long long oldIndex = oldRow[row] * oldWidth + oldColumn[column];
                 destination->ascContent[newIndex] = source->ascContent[oldIndex];
             }
         }
 
-        delete[] oldRow;
-        delete[] oldColumn;
+        // delete[] oldRow;
+        // delete[] oldColumn;
         return RYU_SUCCESS;
     }
     int bilinearInterpolation(const mat *source, mat *destination, double times)
@@ -337,115 +354,141 @@ namespace ryu
         int newWidth = (int)round(oldWidth * times);
         int newHigh = (int)round(oldHigh * times);
 
-        long long valueNumber = newWidth * newHigh;
-        // double HShrinkTimes = (double)newWidth / oldWidth;
-        // double VShrinkTimes = (double)newHigh / oldHigh;
+        // long long valueNumber = newWidth * newHigh;
 
         double xShrinkTimes = (double)(oldWidth - 1) / (double)(newWidth + 1);
-
-        int *oldXCeil = new (std::nothrow) int[newWidth];
-        int *oldXFloor = new (std::nothrow) int[newWidth];
-        double *xCeilWeight = new (std::nothrow) double[newWidth];
-        double *xFloorWeight = new (std::nothrow) double[newWidth];
-        if (oldXCeil == nullptr || oldXFloor == nullptr || xCeilWeight == nullptr || xFloorWeight == nullptr)
-        {
-            errorProblem = MEMNEWERROR;
-            errorMatP = nullptr;
-            return RYU_FAILURE;
-        }
-
-        for (int i = 1; i <= newWidth; i++)
-        {
-            double floatCoordinate = i * xShrinkTimes;
-            oldXCeil[i - 1] = (int)ceil(floatCoordinate);
-            oldXFloor[i - 1] = (int)floor(floatCoordinate);
-            xCeilWeight[i - 1] = floatCoordinate - oldXFloor[i - 1];
-            xFloorWeight[i - 1] = 1 - xCeilWeight[i - 1];
-        }
-
-        double *xInterpolation = new (std::nothrow) double[newWidth * oldHigh]{0};
-        if (xInterpolation == nullptr)
-        {
-            errorProblem = MEMNEWERROR;
-            errorMatP = nullptr;
-            return RYU_FAILURE;
-        }
-
-        for (int row = 0; row < oldHigh; row++)
-        {
-            long long rowIndex = row * newWidth;
-            long long rowOldIndex = row * oldWidth;
-            for (int x = 0; x < newWidth; x++)
-            {
-                xInterpolation[rowIndex + x] += source->ascContent[rowOldIndex + oldXCeil[x]] * xCeilWeight[x];
-                xInterpolation[rowIndex + x] += source->ascContent[rowOldIndex + oldXFloor[x]] * xFloorWeight[x];
-            }
-        }
-
         double yShrinkTimes = (double)(oldHigh - 1) / (double)(newHigh + 1);
-        int *oldYCeil = new (std::nothrow) int[newHigh];
-        int *oldYFloor = new (std::nothrow) int[newHigh];
-        double *yCeilWeight = new (std::nothrow) double[newHigh];
-        double *yFloorWeight = new (std::nothrow) double[newHigh];
-        if (oldYCeil == nullptr || oldYFloor == nullptr || yCeilWeight == nullptr || yFloorWeight == nullptr)
-        {
-            errorProblem = MEMNEWERROR;
-            errorMatP = nullptr;
-            return RYU_FAILURE;
-        }
 
-        for (int i = 1; i <= newHigh; i++)
-        {
-            double floatCoordinate = i * yShrinkTimes;
-            oldYCeil[i - 1] = (int)ceil(floatCoordinate);
-            oldYFloor[i - 1] = (int)floor(floatCoordinate);
-            yCeilWeight[i - 1] = floatCoordinate - oldYFloor[i - 1];
-            yFloorWeight[i - 1] = 1 - yCeilWeight[i - 1];
-        }
+        // int *oldXCeil = new (std::nothrow) int[newWidth];
+        // int *oldXFloor = new (std::nothrow) int[newWidth];
+        // double *xCeilWeight = new (std::nothrow) double[newWidth];
+        // double *xFloorWeight = new (std::nothrow) double[newWidth];
+        // if (oldXCeil == nullptr || oldXFloor == nullptr || xCeilWeight == nullptr || xFloorWeight == nullptr)
+        // {
+        //     errorProblem = MEMNEWERROR;
+        //     errorMatP = nullptr;
+        //     return RYU_FAILURE;
+        // }
 
-        double *addBuffer = new (std::nothrow) double[valueNumber]{0};
-        if (addBuffer == nullptr)
-        {
-            errorProblem = MEMNEWERROR;
-            errorMatP = nullptr;
-            return RYU_FAILURE;
-        }
+        // for (int i = 1; i <= newWidth; i++)
+        // {
+        //     double floatCoordinate = i * xShrinkTimes;
+        //     oldXCeil[i - 1] = (int)ceil(floatCoordinate);
+        //     oldXFloor[i - 1] = (int)floor(floatCoordinate);
+        //     xCeilWeight[i - 1] = floatCoordinate - oldXFloor[i - 1];
+        //     xFloorWeight[i - 1] = 1 - xCeilWeight[i - 1];
+        // }
 
+        // double *xInterpolation = new (std::nothrow) double[newWidth * oldHigh]{0};
+        // if (xInterpolation == nullptr)
+        // {
+        //     errorProblem = MEMNEWERROR;
+        //     errorMatP = nullptr;
+        //     return RYU_FAILURE;
+        // }
+
+        // for (int row = 0; row < oldHigh; row++)
+        // {
+        //     long long rowIndex = row * newWidth;
+        //     long long rowOldIndex = row * oldWidth;
+        //     for (int x = 0; x < newWidth; x++)
+        //     {
+        //         xInterpolation[rowIndex + x] += source->ascContent[rowOldIndex + oldXCeil[x]] * xCeilWeight[x];
+        //         xInterpolation[rowIndex + x] += source->ascContent[rowOldIndex + oldXFloor[x]] * xFloorWeight[x];
+        //     }
+        // }
+
+        // -----------LUT y -----------
+        // int *oldYCeil = new (std::nothrow) int[newHigh];
+        // int *oldYFloor = new (std::nothrow) int[newHigh];
+        // double *yCeilWeight = new (std::nothrow) double[newHigh];
+        // double *yFloorWeight = new (std::nothrow) double[newHigh];
+        // if (oldYCeil == nullptr || oldYFloor == nullptr || yCeilWeight == nullptr || yFloorWeight == nullptr)
+        // {
+        //     errorProblem = MEMNEWERROR;
+        //     errorMatP = nullptr;
+        //     return RYU_FAILURE;
+        // }
+
+        // for (int i = 1; i <= newHigh; i++)
+        // {
+        //     double floatCoordinate = i * yShrinkTimes;
+        //     oldYCeil[i - 1] = (int)ceil(floatCoordinate);
+        //     oldYFloor[i - 1] = (int)floor(floatCoordinate);
+        //     yCeilWeight[i - 1] = floatCoordinate - oldYFloor[i - 1];
+        //     yFloorWeight[i - 1] = 1 - yCeilWeight[i - 1];
+        // }
+
+        // double *addBuffer = new (std::nothrow) double[valueNumber]{0};
+        // if (addBuffer == nullptr)
+        // {
+        //     errorProblem = MEMNEWERROR;
+        //     errorMatP = nullptr;
+        //     return RYU_FAILURE;
+        // }
+
+        // Calculate
         for (int row = 0; row < newHigh; row++)
         {
             long long rowIndex = row * newWidth;
-            long long ceilRowIndex = oldYCeil[row] * newWidth;
-            long long floorRowIndex = oldYFloor[row] * newWidth;
 
-            double yCeilW = yCeilWeight[row];
-            double yFloorW = yFloorWeight[row];
+            // long long ceilRowIndex = oldYCeil[row] * newWidth;
+            // long long floorRowIndex = oldYFloor[row] * newWidth;
+            double yfloatCoordinate = (row + 1) * yShrinkTimes;
+            long long yceilIndex = (int)ceil(yfloatCoordinate) * oldWidth;
+            long long yfloorIndex = (int)floor(yfloatCoordinate) * oldWidth;
+
+            double yCeilW = yfloatCoordinate - (int)floor(yfloatCoordinate);
+            double yFloorW = 1 - yCeilW;
+
+            // double yCeilW = yCeilWeight[row];
+            // double yFloorW = yFloorWeight[row];
             for (int x = 0; x < newWidth; x++)
             {
-                addBuffer[rowIndex + x] += xInterpolation[ceilRowIndex + x] * yCeilW;
-                addBuffer[rowIndex + x] += xInterpolation[floorRowIndex + x] * yFloorW;
+                double xfloatCoordinate = (x + 1) * xShrinkTimes;
+                long long xceilIndex = (int)ceil(xfloatCoordinate);
+                long long xfloorIndex = (int)floor(xfloatCoordinate);
+
+                double xCeilW = xfloatCoordinate - xfloorIndex;
+                double xFloorW = 1 - xCeilW;
+
+                double xInterpolation1 = source->ascContent[yceilIndex + xceilIndex] * xCeilW + source->ascContent[yceilIndex + xfloorIndex] * xFloorW;
+                double xInterpolation2 = source->ascContent[yfloorIndex + xceilIndex] * xCeilW + source->ascContent[yfloorIndex + xfloorIndex] * xFloorW;
+
+                // addBuffer[rowIndex + x] += yCeilW * xInterpolation1;
+                // addBuffer[rowIndex + x] += yFloorW * xInterpolation2;
+                double addBuffer = 0;
+                addBuffer += yCeilW * xInterpolation1;
+                addBuffer += yFloorW * xInterpolation2;
+
+                destination->ascContent[rowIndex + x] = (int)round(addBuffer);
+                // addBuffer[rowIndex + x] += xInterpolation[ceilRowIndex + x] * yCeilW;
+                // addBuffer[rowIndex + x] += xInterpolation[floorRowIndex + x] * yFloorW;
             }
         }
 
-        for (int i = 0; i < valueNumber; i++)
-        {
-            destination->ascContent[i] = (int)round(addBuffer[i]);
-        }
+        // for (int i = 0; i < valueNumber; i++)
+        // {
+        //     destination->ascContent[i] = (int)round(addBuffer[i]);
+        // }
 
-        delete[] oldXFloor;
-        delete[] oldXCeil;
-        delete[] xCeilWeight;
-        delete[] xFloorWeight;
-        delete[] xInterpolation;
+        //LUT
+        // delete[] oldXFloor;
+        // delete[] oldXCeil;
+        // delete[] xCeilWeight;
+        // delete[] xFloorWeight;
+        // delete[] xInterpolation;
 
-        delete[] oldYFloor;
-        delete[] oldYCeil;
-        delete[] yCeilWeight;
-        delete[] yFloorWeight;
-        delete[] addBuffer;
+        // delete[] oldYFloor;
+        // delete[] oldYCeil;
+        // delete[] yCeilWeight;
+        // delete[] yFloorWeight;
+        // delete[] addBuffer;
+
         return RYU_SUCCESS;
     }
 
-    int rotation(const mat *source, mat *destination, double angle)
+    int rotation(const mat *source, mat *destination, const char *cangle)
     {
         int format = source->getFormat();
         if (format != 2)
@@ -454,6 +497,8 @@ namespace ryu
             errorMatP = source;
             return RYU_FAILURE;
         }
+        double angle = atof(cangle);
+
         double rad = angle * M_PI / 180;
         double cosAngle = cosf(rad);
         double sinAngle = sinf(rad);
@@ -477,29 +522,70 @@ namespace ryu
         int xNewOffset = newWidth / 2;
         int yNewOffset = newHigh / 2;
 
-        for (int y = 0; y < hight; y++)
+        // for (int y = 0; y < hight; y++)
+        // {
+        //     long long rowOffset = y * width;
+        //     for (int x = 0; x < width; x++)
+        //     {
+        //         int xOld = x - xOldOffset;
+        //         int yOld = y - yOldOffset;
+
+        //         int xNew = (int)round(xOld * cosAngle - yOld * sinAngle + xNewOffset);
+        //         int yNew = (int)round(xOld * sinAngle + yOld * cosAngle + yNewOffset);
+
+        //         if (xNew < 0)
+        //             xNew = 0;
+        //         if (xNew >= newWidth)
+        //             xNew = newWidth - 1;
+        //         if (yNew < 0)
+        //             yNew = 0;
+        //         if (yNew >= newHigh)
+        //             yNew = newHigh - 1;
+
+        //         int newOffset = xNew + newWidth * yNew;
+
+        //         destination->ascContent[newOffset] = source->ascContent[rowOffset + x];
+        //     }
+        // }
+
+        for (int y = 0; y < newHigh; y++)
         {
-            long long rowOffset = y * width;
-            for (int x = 0; x < width; x++)
+            long long rowOffset = y * newWidth;
+            for (int x = 0; x < newWidth; x++)
             {
-                int xOld = x - xOldOffset;
-                int yOld = y - yOldOffset;
+                // int xOld = x - xOldOffset;
+                // int yOld = y - yOldOffset;
 
-                int xNew = (int)round(xOld * cosAngle - yOld * sinAngle + xNewOffset);
-                int yNew = (int)round(xOld * sinAngle + yOld * cosAngle + yNewOffset);
+                // int xNew = (int)round(xOld * cosAngle - yOld * sinAngle + xNewOffset);
+                // int yNew = (int)round(xOld * sinAngle + yOld * cosAngle + yNewOffset);
 
-                if (xNew < 0)
-                    xNew = 0;
-                if (xNew >= newWidth)
-                    xNew = newWidth - 1;
-                if (yNew < 0)
-                    yNew = 0;
-                if (yNew >= newHigh)
-                    yNew = newHigh - 1;
+                int xNew = x - xNewOffset;
+                int yNew = y - yNewOffset;
 
-                int newOffset = xNew + newWidth * yNew;
+                double xOldF = xNew * cosAngle + yNew * sinAngle + xOldOffset;
+                double yOldF = yNew * cosAngle - xNew * sinAngle + yOldOffset;
 
-                destination->ascContent[newOffset] = source->ascContent[rowOffset + x];
+                int xCeil = (int)ceil(xOldF);
+                int xFloor = (int)floor(xOldF);
+                if (xFloor < 0 || xCeil >= width)
+                    continue;
+
+                int yCeil = (int)ceil(yOldF);
+                int yFloor = (int)floor(yOldF);
+                if (yFloor < 0 || yCeil >= hight)
+                    continue;
+
+                double xCeilW = xOldF - xFloor;
+                double xFloorW = 1 - xCeilW;
+                double yCeilW = yOldF - yFloor;
+                double yFloorW = 1 - yCeilW;
+
+                double add1 = source->ascContent[yCeil * width + xCeil] * xCeilW + source->ascContent[yCeil * width + xFloor] * xFloorW;
+                double add2 = source->ascContent[yFloor * width + xCeil] * xCeilW + source->ascContent[yFloor * width + xFloor] * xFloorW;
+
+                double addBuffer = add1 * yCeilW + add2 * yFloorW;
+                destination->ascContent[rowOffset + x] = (int)round(addBuffer);
+                // destination->ascContent[newOffset] = source->ascContent[rowOffset + x];
             }
         }
         return RYU_SUCCESS;
@@ -593,12 +679,19 @@ namespace ryu
         return RYU_SUCCESS;
     }
 
-    int smooth(const mat *source, mat *destination, int weight)
+    int smooth(const mat *source, mat *destination, const char *cweight)
     {
+        int weight = atoi(cweight);
         int format = source->getFormat();
         if (format != 2)
         {
             errorProblem = FORMATERROR;
+            errorMatP = source;
+            return RYU_FAILURE;
+        }
+        if (weight < 0 || weight > 200)
+        {
+            errorProblem = PARAMETERERROR;
             errorMatP = source;
             return RYU_FAILURE;
         }

@@ -8,25 +8,26 @@
 #define DESTMATINTERROR 2
 #define MEMNEWERROR 3
 #define MODEPROPERTYERROR 4
+#define PARAMETERERROR 5
 namespace ryu
 {
     class mat;
 
     int pgm2ppm(const mat *source, mat *destination);
-    int pgm2pbm(const mat *source, mat *destination, unsigned int threshold = 0);
+    int pgm2pbm(const mat *source, mat *destination, const char *cthreshold);
 
     int flipVertical(mat *source, mat *destination = nullptr);
     int flipHorizontal(mat *source, mat *destination = nullptr);
 
-    int shrinkpgm(char mode, const mat *source, mat *destination, double times);
+    int shrinkpgm(const mat *source, mat *destination, const char *mode, const char *times);
     int nearestNeighbor(const mat *source, mat *destination, double times);
     int bilinearInterpolation(const mat *source, mat *destination, double times);
 
-    int rotation(const mat *source, mat *destination, double angle);
+    int rotation(const mat *source, mat *destination, const char *angle);
 
     int convolution(const mat *source, mat *destination, int core[9]);
 
-    int smooth(const mat *source, mat *destination, int weight);
+    int smooth(const mat *source, mat *destination, const char *weight);
     int sobel(const mat *source, mat *destination);
     int laplacian(const mat *source, mat *destination);
 

@@ -105,6 +105,11 @@ int mat::initialize(int format, int width, int high, int colordepth)
 }
 void mat::printInfor() const
 {
+    if (this->ascContent == nullptr)
+    {
+        std::cout << "Empty image instance!" << std::endl;
+        return;
+    }
     std::cout << "This image is P" << property[0] << " Image" << std::endl;
     std::cout << property[1] << "x" << property[2] << std::endl;
     if (property[3] != 0)
@@ -195,6 +200,8 @@ int mat::readFile()
         char *binBuffer = nullptr;
         if (property[0] == 4)
         {
+
+            // int srcValueSize = pixelNum;
             int srcValueSize = pixelNum * colorNum / 8;
             binBuffer = new char[srcValueSize];
             fileStream.read(binBuffer, srcValueSize);
@@ -208,20 +215,25 @@ int mat::readFile()
                 status = status | NOTMATCH;
                 return RYU_MAT_FAILURE;
             }
+            // std::cout<<endpos-pos<<std::endl;
 
             char buffer;
-            for (long long i = 0; i < srcValueNumber;)
+            for (long long i = 0, index = 0; i < srcValueSize && index < srcValueNumber;i++)
             {
                 memset(&buffer, 0, sizeof(char));
                 memcpy(&buffer, &binBuffer[i], 1);
-                for (int j = 0; j < 8; j++)
+
+                // ascContent[i++]=buffer;
+                for (int j = 0; j < 8 && index < srcValueNumber; j++)
                 {
 
-                    if ((buffer & 0b00000001) == 1)
-                        ascContent[i++] = 1;
+                    // if ((buffer & 0b00000001) == 1)
+                    if ((buffer & 0b10000000) != 0)
+                        ascContent[index++] = 1;
                     else
-                        ascContent[i++] = 0;
-                    buffer = buffer >> 1;
+                        ascContent[index++] = 0;
+                    buffer = buffer << 1;
+                    // buffer = buffer >> 1;
                 }
             }
         }
@@ -347,7 +359,139 @@ int mat::writeAscFile(const char *inoutputPath)
     }
     return RYU_MAT_SUCCESS;
 }
+int mat::writeBinFile(const char *inoutputPath)
+{
+    //write head
+    std::string outputpath;
+    //default output file name
+    if (inoutputPath == nullptr)
+    {
+        outputpath = "output.";
+        switch (property[0])
+        {
+        case 1:
+        case 4:
+            outputpath += "pbm";
+            break;
+        case 2:
+        case 5:
+            outputpath += "pgm";
+            break;
+        case 3:
+        case 6:
+            outputpath += "ppm";
+            break;
+        }
+    }
+    else
+    {
+        outputpath = inoutputPath;
+    }
+    std::ofstream outFile;
+    outFile.open(outputpath, std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!outFile.is_open())
+    {
+        status = status | OUTPATHERROR;
+        return RYU_MAT_FAILURE;
+    }
+    if (!outFile.is_open())
+    {
+        status = status | OUTPATHERROR;
+        return RYU_MAT_FAILURE;
+    }
+    int format = property[0];
+    outFile << "P" << format + 3 << "\n"
+            << property[1] << " " << property[2] << "\n";
 
+    bool regularImage;
+    if (format != 1 && format != 4)
+    {
+        regularImage = property[3] % 255 == 0 ? true : false;
+        int byteWidth = (property[3] / 255) + 0.5;
+        // Cant due with deepth color image
+        if (byteWidth > 1)
+        {
+            status |= WRITEERROR;
+            return RYU_MAT_FAILURE;
+        }
+        int normalizedDeepth = byteWidth * 255;
+        outFile << normalizedDeepth << "\n";
+    }
+    if (outFile.fail())
+    {
+        status = status | WRITEERROR;
+        return RYU_MAT_FAILURE;
+    }
+
+    //write binary content
+    if (format == 1)
+    {
+        int bin = 0;
+        char writeByte;
+        for (long long index = 0; index < srcValueNumber; index++)
+        {
+            if (ascContent[index] > 1)
+            {
+                status |= VALUEDIFFTYPE;
+                return RYU_MAT_FAILURE;
+            }
+            writeByte |= ascContent[index];
+            if (++bin == 8)
+            {
+                bin = 0;
+                outFile.write(&writeByte, 1);
+                writeByte = 0;
+            }
+            else
+            {
+                writeByte <<= 1;
+            }
+            
+        }
+        if (bin != 0)
+        {
+            while (bin != 8)
+            {
+                bin++;
+                writeByte <<= 1;
+            }
+            outFile.write(&writeByte, 1);
+        }
+    }
+    else
+    {
+        char writeByte;
+        if (regularImage)
+        {
+            for (long long index = 0; index < srcValueNumber; index++)
+            {
+                writeByte = (char)ascContent[index];
+                outFile.write(&writeByte, 1);
+            }
+        }
+        else
+        {
+            double shrink = 255 / property[3];
+            for (long long index = 0; index < srcValueNumber; index++)
+            {
+                writeByte = (char)(ascContent[index] * shrink);
+                outFile.write(&writeByte, 1);
+            }
+        }
+    }
+
+    if (!outFile.good())
+    {
+        status = status | WRITEERROR;
+        return RYU_MAT_FAILURE;
+    }
+
+    if (statusCheck() != RYU_MAT_SUCCESS)
+    {
+        exit(0);
+    }
+    return RYU_MAT_SUCCESS;
+}
 int mat::statusCheck() const
 {
     if (status == 0)
@@ -370,5 +514,7 @@ int mat::statusCheck() const
         std::cout << "Memory allocation error." << std::endl;
     if ((status & PROPERTYERROR) != 0)
         std::cout << "Initialize property error." << std::endl;
+    if ((status & VALUEDIFFTYPE) != 0)
+        std::cout << "Image's pixel value and image's type do not match" << std::endl;
     return RYU_MAT_FAILURE;
 }

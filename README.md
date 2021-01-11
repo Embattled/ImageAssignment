@@ -22,5 +22,21 @@ All operation include:
 * Sobel
 * Laplacian
 
-Run `./image input.pgm` will execute all operation above on input.pgm file.  
-The command mode is to be update.  
+~~Run `./image input.pgm` will execute all operation above on input.pgm file.  ~~
+~~The command mode is to be update.  ~~
+
+```c
+printf("./Image (filename) [command] [mode] [param] [outputFile]\n");
+printf("\n");
+printf("Operation     \tcommand \t mode \t param\n");
+printf("Copy          \tcopy    \t -    \t - \n");
+printf("pgm2ppm       \tg2p     \t -    \t - \n");
+printf("pgm2pbm       \tg2b     \t -    \t threshold\n");
+printf("flipVertical  \tfv      \t -    \t - \n");
+printf("flipHorizontal\tfh      \t -    \t - \n");
+printf("shrinkpgm     \tsh      \t n,b  \t time \n");
+printf("rotation      \tro      \t -    \t angle\n");
+printf("smooth        \tsm      \t -    \t weight \n");
+printf("sobel         \tso      \t -    \t - \n");
+printf("laplacian     \tlap     \t -    \t - \n");
+```
