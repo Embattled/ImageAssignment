@@ -7,6 +7,16 @@ Assignment details is in the "taskInformation.txt" file.
 The copyright of the problem belongs to professor Goto.
 Source code written in April 2020 - October 2020 by Yongzhen Long.
 
+# Files
+
+1. main.cpp
+    Define entry to program and operation command.
+2. mat.h mat.cpp
+    Define the class of image data, including W/R disk files.
+3. image.h image.cpp
+    Define core image transformation functions.
+
+
 # Manual
 
 All operation include:
@@ -16,11 +26,11 @@ All operation include:
 * pgm2pbm
 * flipVertical
 * flipHorizontal
-* Shrink
-* Rotation
+* Shrink (rescale)
+* Rotation image
 * Smooth
-* Sobel
-* Laplacian
+* Sobel eage extract
+* Laplacian eage extract
 
 
 ```c
