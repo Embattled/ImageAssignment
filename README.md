@@ -9,12 +9,12 @@ Source code written in April 2020 - October 2020 by Yongzhen Long.
 
 # Files
 
-1. main.cpp
-    Define entry to program and operation command.
-2. mat.h mat.cpp
-    Define the class of image data, including W/R disk files.
-3. image.h image.cpp
-    Define core image transformation functions.
+1. main.cpp  
+   - Define entry to program and operation command.
+2. mat.h mat.cpp  
+   - Define the class of image data, including W/R disk files.
+3. image.h image.cpp  
+   - Define core image transformation functions.
 
 
 # Manual
