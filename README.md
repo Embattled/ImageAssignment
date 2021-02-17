@@ -22,8 +22,6 @@ All operation include:
 * Sobel
 * Laplacian
 
-~~Run `./image input.pgm` will execute all operation above on input.pgm file.  ~~
-~~The command mode is to be update.  ~~
 
 ```c
 printf("./Image (filename) [command] [mode] [param] [outputFile]\n");

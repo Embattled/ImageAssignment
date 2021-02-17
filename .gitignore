@@ -3,3 +3,4 @@
 *.pgm
 *.pbm
 image
+.vscode/
