@@ -1,4 +1,4 @@
-# ImageAssignment
+# ImageTransformLib
 
 This project is an exercise project assigned to the students of Goto laboratory, GSIS of Tohoku University. 
 By implementing various operation transformations of images without using library functions to master the basic image processing algorithm.
@@ -10,7 +10,7 @@ Source code written in April 2020 - October 2020 by Yongzhen Long.
 # Files
 
 1. main.cpp  
-   - Define entry to program and operation command.
+   - Define entry to test program and operation command.
 2. mat.h mat.cpp  
    - Define the class of image data, including W/R disk files.
 3. image.h image.cpp  
