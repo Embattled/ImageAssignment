@@ -272,10 +272,10 @@ namespace ryu
             return RYU_FAILURE;
         }
 
-        int newWidth = (int)round(source->getWidth() * times);
-        int newHigh = (int)round(source->getHight() * times);
+        int newWidth = (int)(source->getWidth() * times+0.5);
+        int newHeight = (int)(source->getHight() * times+0.5);
 
-        if (destination->initialize(2, newWidth, newHigh, source->getColordepth()) != RYU_MAT_SUCCESS)
+        if (destination->initialize(2, newWidth, newHeight, source->getColordepth()) != RYU_MAT_SUCCESS)
         {
             errorProblem = DESTMATINTERROR;
             errorMatP = destination;
@@ -305,13 +305,13 @@ namespace ryu
     {
         int oldWidth = source->getWidth();
         int oldHigh = source->getHight();
-        int newWidth = (int)round(oldWidth * times);
-        int newHigh = (int)round(oldHigh * times);
+        int newWidth = (int)(oldWidth * times+0.5);
+        int newHeight = (int)(oldHigh * times+0.5);
 
         double HShrinkTimes = (double)newWidth / oldWidth;
-        double VShrinkTimes = (double)newHigh / oldHigh;
+        double VShrinkTimes = (double)newHeight / oldHigh;
 
-        // int *oldRow = new (std::nothrow) int[newHigh];
+        // int *oldRow = new (std::nothrow) int[newHeight];
         // int *oldColumn = new (std::nothrow) int[newWidth];
         // if (oldRow == nullptr || oldColumn == nullptr)
         // {
@@ -320,7 +320,7 @@ namespace ryu
         //     return RYU_FAILURE;
         // }
 
-        // for (int i = 1; i <= newHigh; i++)
+        // for (int i = 1; i <= newHeight; i++)
         // {
         //     oldRow[i - 1] = (int)round(i / VShrinkTimes) - 1;
         // }
@@ -329,12 +329,12 @@ namespace ryu
         // {
         //     oldColumn[i - 1] = (int)round(i / HShrinkTimes) - 1;
         // }
-        for (int row = 0; row < newHigh; row++)
+        for (int row = 0; row < newHeight; row++)
         {
             for (int column = 0; column < newWidth; column++)
             {
-                int oldRow = (int)round((row + 1) / VShrinkTimes) - 1;
-                int oldColumn = (int)round((column + 1) / HShrinkTimes) - 1;
+                int oldRow = (int)(0.5+(row + 1) / VShrinkTimes) - 1;
+                int oldColumn = (int)(0.5+(column + 1) / HShrinkTimes) - 1;
                 long long oldIndex = oldRow * oldWidth + oldColumn;
 
                 long long newIndex = row * newWidth + column;
@@ -351,13 +351,13 @@ namespace ryu
     {
         int oldWidth = source->getWidth();
         int oldHigh = source->getHight();
-        int newWidth = (int)round(oldWidth * times);
-        int newHigh = (int)round(oldHigh * times);
+        int newWidth = (int)(oldWidth * times+0.5);
+        int newHeight = (int)(oldHigh * times+0.5);
 
-        // long long valueNumber = newWidth * newHigh;
+        // long long valueNumber = newWidth * newHeight;
 
         double xShrinkTimes = (double)(oldWidth - 1) / (double)(newWidth + 1);
-        double yShrinkTimes = (double)(oldHigh - 1) / (double)(newHigh + 1);
+        double yShrinkTimes = (double)(oldHigh - 1) / (double)(newHeight + 1);
 
         // int *oldXCeil = new (std::nothrow) int[newWidth];
         // int *oldXFloor = new (std::nothrow) int[newWidth];
@@ -399,10 +399,10 @@ namespace ryu
         // }
 
         // -----------LUT y -----------
-        // int *oldYCeil = new (std::nothrow) int[newHigh];
-        // int *oldYFloor = new (std::nothrow) int[newHigh];
-        // double *yCeilWeight = new (std::nothrow) double[newHigh];
-        // double *yFloorWeight = new (std::nothrow) double[newHigh];
+        // int *oldYCeil = new (std::nothrow) int[newHeight];
+        // int *oldYFloor = new (std::nothrow) int[newHeight];
+        // double *yCeilWeight = new (std::nothrow) double[newHeight];
+        // double *yFloorWeight = new (std::nothrow) double[newHeight];
         // if (oldYCeil == nullptr || oldYFloor == nullptr || yCeilWeight == nullptr || yFloorWeight == nullptr)
         // {
         //     errorProblem = MEMNEWERROR;
@@ -410,7 +410,7 @@ namespace ryu
         //     return RYU_FAILURE;
         // }
 
-        // for (int i = 1; i <= newHigh; i++)
+        // for (int i = 1; i <= newHeight; i++)
         // {
         //     double floatCoordinate = i * yShrinkTimes;
         //     oldYCeil[i - 1] = (int)ceil(floatCoordinate);
@@ -428,7 +428,7 @@ namespace ryu
         // }
 
         // Calculate
-        for (int row = 0; row < newHigh; row++)
+        for (int row = 0; row < newHeight; row++)
         {
             long long rowIndex = row * newWidth;
 
@@ -461,7 +461,7 @@ namespace ryu
                 addBuffer += yCeilW * xInterpolation1;
                 addBuffer += yFloorW * xInterpolation2;
 
-                destination->ascContent[rowIndex + x] = (int)round(addBuffer);
+                destination->ascContent[rowIndex + x] = (int)(addBuffer+0.5);
                 // addBuffer[rowIndex + x] += xInterpolation[ceilRowIndex + x] * yCeilW;
                 // addBuffer[rowIndex + x] += xInterpolation[floorRowIndex + x] * yFloorW;
             }
@@ -506,10 +506,10 @@ namespace ryu
         int width = source->getWidth();
         int hight = source->getHight();
 
-        int newWidth = (int)round(width * fabsf(cosAngle) + hight * fabsf(sinAngle));
-        int newHigh = (int)round(width * fabsf(sinAngle) + hight * fabsf(cosAngle));
+        int newWidth = (int)(width * fabsf(cosAngle) + hight * fabsf(sinAngle)+0.5);
+        int newHeight = (int)(width * fabsf(sinAngle) + hight * fabsf(cosAngle)+0.5);
 
-        if (destination->initialize(format, newWidth, newHigh, source->getColordepth()) != RYU_MAT_SUCCESS)
+        if (destination->initialize(format, newWidth, newHeight, source->getColordepth()) != RYU_MAT_SUCCESS)
         {
             errorProblem = DESTMATINTERROR;
             errorMatP = destination;
@@ -520,7 +520,7 @@ namespace ryu
         int yOldOffset = hight / 2;
 
         int xNewOffset = newWidth / 2;
-        int yNewOffset = newHigh / 2;
+        int yNewOffset = newHeight / 2;
 
         // for (int y = 0; y < hight; y++)
         // {
@@ -539,8 +539,8 @@ namespace ryu
         //             xNew = newWidth - 1;
         //         if (yNew < 0)
         //             yNew = 0;
-        //         if (yNew >= newHigh)
-        //             yNew = newHigh - 1;
+        //         if (yNew >= newHeight)
+        //             yNew = newHeight - 1;
 
         //         int newOffset = xNew + newWidth * yNew;
 
@@ -548,7 +548,7 @@ namespace ryu
         //     }
         // }
 
-        for (int y = 0; y < newHigh; y++)
+        for (int y = 0; y < newHeight; y++)
         {
             long long rowOffset = y * newWidth;
             for (int x = 0; x < newWidth; x++)
@@ -584,7 +584,7 @@ namespace ryu
                 double add2 = source->ascContent[yFloor * width + xCeil] * xCeilW + source->ascContent[yFloor * width + xFloor] * xFloorW;
 
                 double addBuffer = add1 * yCeilW + add2 * yFloorW;
-                destination->ascContent[rowOffset + x] = (int)round(addBuffer);
+                destination->ascContent[rowOffset + x] = (int)(addBuffer+0.5);
                 // destination->ascContent[newOffset] = source->ascContent[rowOffset + x];
             }
         }
@@ -672,7 +672,7 @@ namespace ryu
 
                 if (needNormalizing)
                 {
-                    destination->ascContent[rowOffset + x] = (unsigned int)round(destination->ascContent[rowOffset + x] / (double)abs(scaleNum));
+                    destination->ascContent[rowOffset + x] = (unsigned int)(0.5+destination->ascContent[rowOffset + x] / (double)abs(scaleNum));
                 }
             }
         }
@@ -734,7 +734,7 @@ namespace ryu
         int scale = 4;
         for (long long i = 0; i < destination->getValueNum(); i++)
         {
-            destination->ascContent[i] = (int)round(sqrt(gx->ascContent[i] * gx->ascContent[i] + gy->ascContent[i] * gy->ascContent[i]) / ((double)scale * sqrt(2)));
+            destination->ascContent[i] = (int)(0.5+sqrt(gx->ascContent[i] * gx->ascContent[i] + gy->ascContent[i] * gy->ascContent[i]) / ((double)scale * sqrt(2)));
         }
         delete gx;
         delete gy;
@@ -756,7 +756,7 @@ namespace ryu
         double scale = 8;
         for (long long i = 0; i < destination->getValueNum(); i++)
         {
-            destination->ascContent[i] = (unsigned int)round(destination->ascContent[i] / scale);
+            destination->ascContent[i] = (unsigned int)(0.5+destination->ascContent[i] / scale);
         }
         return RYU_SUCCESS;
     }
